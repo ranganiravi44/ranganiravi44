@@ -1,51 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
+import { createClient } from "@supabase/supabase-js"
 import { Search, User, ShoppingBag, Menu, X, Check, Plus, Minus, ArrowLeft } from "lucide-react"
+
+const supabaseUrl = "YOUR_SUPABASE_URL"
+const supabaseAnonKey = "YOUR_SUPABASE_ANON_KEY"
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 type Product = {
   id: number
   title: string
   price: string
-  mainImage: string
+  image_url: string
   description: string
 }
-
-const products: Product[] = [
-  {
-    id: 1,
-    title: "Ivory Zari Silk Saree",
-    price: "₹ 12,900",
-    mainImage: "/images/product-1.png",
-    description:
-      "A timeless pure silk saree with an intricate handwoven gold zari border, made to drape effortlessly for occasions that call for quiet luxury.",
-  },
-  {
-    id: 2,
-    title: "Blush Embroidered Lehenga",
-    price: "₹ 24,500",
-    mainImage: "/images/product-2.png",
-    description:
-      "A softly structured lehenga in blush georgette, hand-embroidered with delicate floral threadwork for a luminous, celebratory finish.",
-  },
-  {
-    id: 3,
-    title: "Grey Anarkali Kurti",
-    price: "₹ 6,400",
-    mainImage: "/images/product-3.png",
-    description:
-      "A flowing anarkali kurti in muted grey cotton silk, cut for graceful movement and everyday elegance with minimal detailing.",
-  },
-  {
-    id: 4,
-    title: "Champagne Georgette Saree",
-    price: "₹ 14,200",
-    mainImage: "/images/product-4.png",
-    description:
-      "A featherlight champagne georgette saree with a subtle sheen and a fine tonal border, designed to drape like liquid light.",
-  },
-]
 
 const navLinks = ["Sarees", "Lehengas", "Kurtis", "Girls"]
 
@@ -205,7 +175,15 @@ function ShopByCategory() {
   )
 }
 
-function Bestsellers({ onSelect }: { onSelect: (product: Product) => void }) {
+function Bestsellers({
+  products,
+  isLoading,
+  onSelect,
+}: {
+  products: Product[]
+  isLoading: boolean
+  onSelect: (product: Product) => void
+}) {
   return (
     <section id="bestsellers" className="mx-auto max-w-7xl px-6 pb-28 lg:px-10 lg:pb-36">
       <div className="mb-14 text-center">
@@ -213,35 +191,45 @@ function Bestsellers({ onSelect }: { onSelect: (product: Product) => void }) {
         <h2 className="font-serif text-4xl font-light tracking-tight text-neutral-900 lg:text-5xl">Bestsellers</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4 lg:gap-x-6">
-        {products.map((product) => (
-          <button
-            key={product.id}
-            type="button"
-            onClick={() => onSelect(product)}
-            className="group flex flex-col text-left"
-          >
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50">
-              <Image
-                src={product.mainImage || "/placeholder.svg"}
-                alt={product.title}
-                fill
-                sizes="(max-width: 1024px) 50vw, 25vw"
-                className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
-              />
-              <div className="absolute inset-x-0 bottom-0 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-                <span className="block w-full bg-neutral-900 py-3.5 text-center text-[11px] font-light uppercase tracking-[0.25em] text-white">
-                  View Product
-                </span>
+      {isLoading ? (
+        <p className="py-24 text-center text-sm font-light uppercase tracking-[0.3em] text-neutral-400">
+          Loading Swampy Creation collection...
+        </p>
+      ) : products.length === 0 ? (
+        <p className="py-24 text-center text-sm font-light uppercase tracking-[0.3em] text-neutral-400">
+          No products found.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-4 lg:gap-x-6">
+          {products.map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              onClick={() => onSelect(product)}
+              className="group flex flex-col text-left"
+            >
+              <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50">
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.title}
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                  className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+                <div className="absolute inset-x-0 bottom-0 translate-y-full opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+                  <span className="block w-full bg-neutral-900 py-3.5 text-center text-[11px] font-light uppercase tracking-[0.25em] text-white">
+                    View Product
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="mt-4 flex flex-col items-start">
-              <h3 className="text-sm font-light text-neutral-800">{product.title}</h3>
-              <p className="mt-1 text-sm font-light tracking-wide text-neutral-500">{product.price}</p>
-            </div>
-          </button>
-        ))}
-      </div>
+              <div className="mt-4 flex flex-col items-start">
+                <h3 className="text-sm font-light text-neutral-800">{product.title}</h3>
+                <p className="mt-1 text-sm font-light tracking-wide text-neutral-500">{product.price}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -373,7 +361,7 @@ function ProductDetails({ product, onBack }: { product: Product; onBack: () => v
         {/* Image */}
         <div className="relative aspect-[3/4] w-full overflow-hidden bg-neutral-50">
           <Image
-            src={product.mainImage || "/placeholder.svg"}
+            src={product.image_url || "/placeholder.svg"}
             alt={product.title}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
@@ -486,6 +474,25 @@ function ProductDetails({ product, onBack }: { product: Product; onBack: () => v
 export default function Page() {
   const [view, setView] = useState<"home" | "product">("home")
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const { data, error } = await supabase.from("products").select("*")
+        if (error) throw error
+        setProducts(data ?? [])
+      } catch (err) {
+        console.error("[v0] Failed to fetch products:", err)
+        setProducts([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   const handleSelect = (product: Product) => {
     setSelectedProduct(product)
@@ -505,7 +512,7 @@ export default function Page() {
         <main>
           <Hero />
           <ShopByCategory />
-          <Bestsellers onSelect={handleSelect} />
+          <Bestsellers products={products} isLoading={isLoading} onSelect={handleSelect} />
         </main>
       ) : (
         <ProductDetails product={selectedProduct} onBack={handleBack} />
